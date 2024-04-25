@@ -1,0 +1,44 @@
+version: '3'
+services:
+    web:
+        build:
+            context: ./html
+            dockerfile: Dockerfile
+        ports:
+            - "8080:80"
+        environment:
+            - DATABASE_HOST=db
+            - DATABASE_PORT=3306
+            - DATABASE_NAME=first
+            - DATABASE_USER=root
+            - DATABASE_PASSWORD=12345678
+        volumes:
+            - ./html:/var/www/html
+            - db_data:/var/lib/mysql
+        depends_on:
+            - db
+        networks:
+            custom_network:
+                ipv4_address:  172.20.0.22
+    db:
+        image: mariadb
+        environment:
+            MYSQL_DATABASE: first
+            MYSQL_USER: root
+            MYSQL_PASSWORD: 12345678
+            MYSQL_ROOT_PASSWORD: 12345678
+        volumes:
+            - db_data:/var/lib/mysql
+        networks:
+            custom_network:
+                ipv4_address:  172.20.0.23
+
+volumes:
+    db_data: {}
+
+networks:
+    custom_network:
+        driver: bridge
+        ipam:
+            config:
+                - subnet:  172.20.0.0/16
