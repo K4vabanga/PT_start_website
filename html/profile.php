@@ -80,8 +80,11 @@ require_once('db.php');
 $link = mysqli_connect('db','root','12345678', 'first');
 
 if (isset($_POST['submit'])) {
-	$title = mysqli_real_escape_string($link, $_POST['name']);
-	$main_text = mysqli_real_escape_string($link, $_POST['content']);
+	$title = strip_tags($_POST['name']);
+	$main_text = strip_tags($_POST['content']);
+
+	$title = mysqli_real_escape_string($link, $title);
+	$main_text = mysqli_real_escape_string($link, $main_text);
 
 	if (!$title || !$main_text) die ("Заполните все поля");
 
@@ -90,18 +93,38 @@ if (isset($_POST['submit'])) {
 
 	if(!empty($_FILES["file"]))
     {
-        if (((@$_FILES["file"]["type"] == "image/gif") || (@$_FILES["file"]["type"] == "image/jpeg")
-        || (@$_FILES["file"]["type"] == "image/jpg") || (@$_FILES["file"]["type"] == "image/pjpeg")
-        || (@$_FILES["file"]["type"] == "image/x-png") || (@$_FILES["file"]["type"] == "image/png"))
-        && (@$_FILES["file"]["size"] < 102400))
-        {
-            move_uploaded_file($_FILES["file"]["tmp_name"], "upload/" . $_FILES["file"]["name"]);
-            echo "Load in:  " . "upload/" . $_FILES["file"]["name"];
-        }
-        else
-        {
-            echo "upload failed!";
-        }
+		$errors = [];
+		$allowedtypes = ['image/gif', 'image/jpeg', 'image/jpg', 'image/pjpeg', 'image/x-png', 'image/png'];
+		$maxFileSize = 102400;
+
+		if ($_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+        		$errors[] = 'Произошла ошибка при загрузке файла.';
+    		}
+
+		$realFileSize = filesize($_FILES['file']['tmp_name']);
+		if ($realFileSize > $maxFileSize) {
+        		$errors[] = 'Файл слишком большой.';
+    		}
+
+		$fileType = finfo_file(finfo_open(FILEINFO_MIME_TYPE), $_FILES['file']['tmp_name']);
+
+    		if (!in_array($fileType, $allowedtypes)) {
+        		$errors[] = 'Недопустимый тип файла.';
+    		}
+
+		if (empty($errors)) {
+			$tempPath = $_FILES['file']['tmp_name'];
+        		$destinationPath = 'upload/' . uniqid() . '_' . basename($_FILES['file']['name']);
+			if (move_uploaded_file($tempPath, $destinationPath)) {
+            			echo "Файл загружен успешно: " . $destinationPath;
+        		} else {
+            			$errors[] = 'Не удалось переместить загруженный файл.';
+        		}
+		} else {
+        		foreach ($errors as $error) {
+            			echo $error . '<br>';
+        		}
+		}
     }
 
 	$sql = "INSERT INTO posts (name, content) VALUES ('$title', '$main_text')";
