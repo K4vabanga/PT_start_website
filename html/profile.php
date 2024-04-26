@@ -80,11 +80,14 @@ require_once('db.php');
 $link = mysqli_connect('db','root','12345678', 'first');
 
 if (isset($_POST['submit'])) {
-	$title = $_POST['name'];
-	$main_text = $_POST['content'];
-	
+	$title = mysqli_real_escape_string($link, $_POST['name']);
+	$main_text = mysqli_real_escape_string($link, $_POST['content']);
+
 	if (!$title || !$main_text) die ("Заполните все поля");
-	
+
+	$title = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
+	$main_text = htmlspecialchars($main_text, ENT_QUOTES, 'UTF-8');
+
 	if(!empty($_FILES["file"]))
     {
         if (((@$_FILES["file"]["type"] == "image/gif") || (@$_FILES["file"]["type"] == "image/jpeg")
@@ -100,9 +103,9 @@ if (isset($_POST['submit'])) {
             echo "upload failed!";
         }
     }
-	
+
 	$sql = "INSERT INTO posts (name, content) VALUES ('$title', '$main_text')";
-	
+
 	if (!mysqli_query($link, $sql)) die ("Не удалось добавить пост");
 }
 ?>

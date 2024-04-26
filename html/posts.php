@@ -1,6 +1,7 @@
 <?php
 $link = mysqli_connect('db','root','12345678', 'first');
 $id = $_GET['id'];
+settype($id, 'integer');
 $sql = "SELECT * FROM posts WHERE id=$id";
 $res = mysqli_query($link, $sql);
 $rows = mysqli_fetch_array($res);
